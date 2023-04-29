@@ -23,7 +23,10 @@ export default function Header() {
           <a className={styles.headerItem}>Listings</a>
         </Link>
         <Link href="/account">
-          <a className={styles.headerItem} style={{minWidth:100}}>My GIGs</a>
+          <a className={styles.headerItem} style={{minWidth:100}}>My NFTs</a>
+        </Link>
+        <Link href="/nftexc">
+          <a className={styles.headerItem} style={{minWidth:100}}>NFT Exc</a>
         </Link>
       </div>
 

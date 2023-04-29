@@ -7,7 +7,7 @@ export default function getOwned(){
 const address=useAddress()
 const sdk = new ThirdwebSDK("mumbai");
 const [data, setData] = useState([])
-
+const contract = "0x9650CF55b186ECfcf6cC55B8769AE20ce292ffb8"
 const getMint = () => {
 
     (async()=> {
@@ -45,7 +45,7 @@ return<>
 <MediaRenderer style={{width:200}} src={item.metadata.image}/>
 <h1 style={{fontSize:20}}>{item.metadata.name}</h1>
 <h1 style={{fontSize:10}}>owned by {item.owner} </h1>
-</form>
+<h1 style={{fontSize:10}}>contract address {contract} </h1></form>
 </>
 
 })}

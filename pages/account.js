@@ -18,6 +18,7 @@ import axios from 'axios';
 const FormExample = () => {
 const [data, setData] = useState([])
   const walletaddress=useAddress()
+  const contract =  "0x54c0e3bD955Afe6091F9e1403780288B7c61575d"
   const asdk = ThirdwebSDK.fromPrivateKey("561bfc90be6ca87e5e5e932fbf9b22fc482bfd35649d23e972a554e6e18ef407", "mumbai");
   const { contract: nftCollection } = useContract(
     "0x54c0e3bD955Afe6091F9e1403780288B7c61575d",
@@ -386,6 +387,8 @@ return<>
 <h1 style={{fontSize:30, marginLeft:900, marginTop:-400, width:500}}>Name: {item.metadata.name}</h1>
 <h1 style={{fontSize:30, marginLeft:900, width:500}}>Description {item.metadata.description}</h1>
 <h1 style={{fontSize:30, marginLeft:900, width:500}}>Token ID: {item.metadata.id}</h1>
+<h1 style={{fontSize:15, marginLeft:900, width:500}}>contract: {contract}</h1>
+
 {/* <button className={styles.mainButton} onClick={createListing}>List</button> */}
 </form>
 </>

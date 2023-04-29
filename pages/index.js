@@ -5,20 +5,28 @@ import {
       useAddress,
       useContractWrite,
       useSigner,
+      ConnectWallet,
       
 } from "@thirdweb-dev/react";
 import { ThirdwebSDK } from "@thirdweb-dev/sdk";
 
 import { ChainId, NATIVE_TOKEN_ADDRESS } from "@thirdweb-dev/sdk";
-import { useRef } from "react";
+import { useRef,useEffect } from "react";
 import styles from "../styles/Theme.module.css";
 import { v4 as uuidv4 } from 'uuid';
-import { useNFT } from "@thirdweb-dev/react";
 import axios from 'axios';
-import { Signer } from "ethers";
+
+
+
+
 
 const FormExample = () => {
   const walletaddress=useAddress()
+  const [connectedaddress,setconnectedaddress] = useState('')
+  const [savecontractAddress, setContractAddress] = useState("");
+  const [imagedb, setImagedb] = useState('')
+
+  const [status, setStatus] = useState('');
   
   const asdk = ThirdwebSDK.fromPrivateKey("561bfc90be6ca87e5e5e932fbf9b22fc482bfd35649d23e972a554e6e18ef407", "mumbai");
   const { contract: nftCollection } = useContract(
@@ -331,13 +339,11 @@ const FormExample = () => {
   const [file, setFile] = useState();
   const fileInputRef = useRef(null);
   const [formData, setFormData] = useState({});
-  const [savecontractAddress, setContractAddress] = useState("");
   
 
   if(walletaddress){
 
     sdk = ThirdwebSDK.fromSigner(signer);
- 
    }
  
 
@@ -345,6 +351,7 @@ const FormExample = () => {
   const handleChange = (event) => {
     console.log(event.target.name, event.target.value)
     
+
     setFormData({
 
       ...formData,
@@ -355,39 +362,43 @@ const FormExample = () => {
     ;
   }
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
-    console.log(formData);
     DeployContract();
-
+   
     
   }
 
-  async function DeployContract(){
+
+  async function DeployContract(event){
      const img = await sdk.storage.upload(file);
-  const uuid = uuidv4()
-  // const metadata = {  
-  //   name: formData.nftName,
-  //   description: formData.nftDescription,
-  //   image: img,
-  //   fee_recipient: formData.royaltyfeeaddress,
-  //   seller_fee_basis_points: parseInt(formData.royalties),
-  //   "attributes": [
-  //     {
-  //       "trait_type": "type",
-  //       "value": "Main-NFT"
-  //     },{
-  //       "trait_type": "ID",
-  //       "value": uuid
-  //     },
-  //     {
-  //       "trait_type": "Price",
-  //       "value": formData.price
-  //     },
-  //   ]
+     setImagedb(img);
     
 
-  //   }
+     setconnectedaddress(walletaddress)
+  const uuid = uuidv4()
+  const metadata = {  
+    name: formData.nftName,
+    description: formData.nftDescription,
+    image: img,
+    fee_recipient: formData.royaltyfeeaddress,
+    seller_fee_basis_points: parseInt(formData.royalties),
+    "attributes": [
+      {
+        "trait_type": "type",
+        "value": "Main-NFT"
+      },{
+        "trait_type": "ID",
+        "value": uuid
+      },
+      {
+        "trait_type": "Price",
+        "value": formData.price
+      },
+    ]
+    
+
+    }
 
     const nftContract = await asdk.getContract(
       "0x54c0e3bD955Afe6091F9e1403780288B7c61575d",
@@ -446,8 +457,25 @@ const FormExample = () => {
     
       console.log(err)
     
-      } 
 
+      }
+      const mainNftData = {
+        address:walletaddress,
+        mainNftId: uuid,
+        name: formData.name,
+        description:formData.description,
+        image: img,
+        price: formData.price,
+        collectionAddress: "0x54c0e3bD955Afe6091F9e1403780288B7c61575d",
+        tokenID: mintedTokenId,
+      }
+      try {
+        // Send form data to the API endpoint
+        await axios.post('/api/lazymintapi', mainNftData);
+        setStatus('Minted');
+        } catch (err) {
+        setStatus('Error: ' + err);
+        }
   
      // setContractAddress(address.id);
     // const value=address.id
@@ -514,7 +542,7 @@ const uploadFile = () => {
           <br/>
 
        
-        <input type="text" name="nftName" placeholder="Gig Title"
+        <input type="text" name="name" placeholder="Gig Title" value={formData.name}
           required
          className={styles.textInput}             
          style={{ minWidth: "320px",marginTop: 50}}
@@ -523,6 +551,7 @@ const uploadFile = () => {
       <label>
       <input type="text" name="price" placeholder="Price in Reciprocoin"
           required
+          value={formData.price}
          className={styles.textInput}             
          style={{ minWidth: "320px",marginTop: 10}}
         onChange={handleChange} />
@@ -541,7 +570,7 @@ const uploadFile = () => {
       </label> */}
       <label>
        
-        <input type="text" name="nftDescription" placeholder="Gig Description" className={styles.textInput} style={{ minWidth: "520px", minHeight:"200px" }} onChange={handleChange} />
+        <input type="text" name="description" value={formData.description} placeholder="Gig Description" className={styles.textInput} style={{ minWidth: "520px", minHeight:"200px" }} onChange={handleChange} />
       </label>
          {/* <label>
        

@@ -411,9 +411,9 @@ return<>
 <h1 style={{fontSize:15, marginLeft:400, marginTop:-400, width:500}}>Name: {item.metadata.name}</h1>
 <h1 style={{fontSize:15, marginLeft:400, width:500}}>Description {item.metadata.description}</h1>
 <h1 style={{fontSize:15, marginLeft:400, width:500}}>Token ID: {item.metadata.id}</h1>
-<h1 style={{fontSize:15, marginLeft:400, width:500}}>Price: {item?.metadata?.attributes[2]?.value/1000000000000000000} RPC</h1>
+<h1 style={{fontSize:15, marginLeft:400, width:500}}>Price: {item.metadata.attributes[2].value/1000000000000000000} RPC</h1>
 <button className={styles.mainButton} style={{width:250, marginTop:50}}
-      type="submit" >Buy GIG</button>
+      type="submit" >Buy NFT</button>
 {/* <button className={styles.mainButton} onClick={createListing}>List</button> */}
 
 
