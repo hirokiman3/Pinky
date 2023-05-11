@@ -23,7 +23,8 @@ const formSchema = new mongoose.Schema({
     image: String,
     price: String,
     collectionAddress: String,
-    tokenID: Number
+    tokenID: Number,
+    listingType: String
 }
 );
 

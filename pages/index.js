@@ -20,8 +20,25 @@ import axios from 'axios';
 
 
 
+
+
+
 const FormExample = () => {
+  const {contract:marketplacecontract} = useContract("0x05Ac9CE9CCfEb31776E6FBc41acB163aa9676270", "marketplace")
+  const [marketplaceformData, setmarketplaceFormData] = useState({
+    assetContractAddress: '',
+    tokenId: '',
+    startTimestamp: new Date(),
+    listingDurationInSeconds: '999999999',
+    quantity: '1',
+    currencyContractAddress: '',
+    buyoutPricePerToken: ''
+  });
+  const [listingid,setlistingid] = useState('')
+  const [selectedValue, setSelectedValue] = useState("task");
+
   const walletaddress=useAddress()
+
   const [connectedaddress,setconnectedaddress] = useState('')
   const [savecontractAddress, setContractAddress] = useState("");
   const [imagedb, setImagedb] = useState('')
@@ -341,12 +358,16 @@ const FormExample = () => {
   const [formData, setFormData] = useState({});
   
 
-  if(walletaddress){
+  if(walletaddress&&signer){
 
     sdk = ThirdwebSDK.fromSigner(signer);
    }
  
+   const handleDropdownChange = (event) => {
+    setSelectedValue(event.target.value);
+  };
 
+  //nfts as task 
 
   const handleChange = (event) => {
     console.log(event.target.name, event.target.value)
@@ -365,9 +386,66 @@ const FormExample = () => {
   const handleSubmit = async (event) => {
     event.preventDefault();
     DeployContract();
-   
-    
+
   }
+
+
+
+
+
+
+
+
+
+  //marketplace starts from here 
+
+
+
+
+
+
+
+
+
+  const handleChangemarketplace = (event) => {
+    setmarketplaceFormData({
+      ...marketplaceformData,
+      [event.target.name]: event.target.value,
+    });
+  };
+
+  const marketplacehandleSubmit = async (event) => {
+    console.log(marketplaceformData)
+    event.preventDefault();
+    try{
+    const tx = await marketplacecontract.direct.createListing(marketplaceformData);
+    const listingId = tx.id;
+    console.log(`Listing created successfully with ID: ${listingId}`);
+    setlistingid(listingId)
+    } catch(error){
+    
+      console.log(error);
+    }
+    const marketplaceListing={
+        tokenID:listingid,
+        listingType: selectedValue
+    }
+
+    try {
+      // Send form data to the API endpoint
+      await axios.post('/api/lazymintapi', marketplaceListing);
+      setStatus('Minted');
+      } catch (err) {
+      setStatus('Error: ' + err);
+      }
+
+
+
+
+  };
+
+
+  
 
 
   async function DeployContract(event){
@@ -376,8 +454,8 @@ const FormExample = () => {
     
 
      setconnectedaddress(walletaddress)
-  const uuid = uuidv4()
-  const metadata = {  
+    const uuid = uuidv4()
+    const metadata = {  
     name: formData.nftName,
     description: formData.nftDescription,
     image: img,
@@ -459,19 +537,19 @@ const FormExample = () => {
     
 
       }
-      const mainNftData = {
+      const taskListing = {
         address:walletaddress,
-        mainNftId: uuid,
         name: formData.name,
         description:formData.description,
         image: img,
         price: formData.price,
         collectionAddress: "0x54c0e3bD955Afe6091F9e1403780288B7c61575d",
         tokenID: mintedTokenId,
+        listingType: selectedValue
       }
       try {
         // Send form data to the API endpoint
-        await axios.post('/api/lazymintapi', mainNftData);
+        await axios.post('/api/lazymintapi', taskListing);
         setStatus('Minted');
         } catch (err) {
         setStatus('Error: ' + err);
@@ -509,6 +587,27 @@ const uploadFile = () => {
 
 
   return (
+    <>
+    <select
+      name="dropdown"
+      className={styles.dropdown}
+      style={{ minWidth: 200, marginTop:100}}
+      value={selectedValue}
+      onChange={handleDropdownChange}
+    >
+      <option value="task">Task</option>
+      <option value="marketplace">ERC721 - ERC20</option>
+      <option value="nftexc">ERC721 - ERC721</option>
+    </select>
+
+
+{/* 
+this is for task */}
+
+
+
+
+    {selectedValue === "task" && (
     <form onSubmit={handleSubmit} >
         <div className={styles.container}>
 
@@ -556,34 +655,14 @@ const uploadFile = () => {
          style={{ minWidth: "320px",marginTop: 10}}
         onChange={handleChange} />
       </label>
-
-
       
       <br />
-      {/* <label>
-       
-        <input type="text" name="nftContractAddress" placeholder="david property/ being given static atm" className={styles.textInput} style={{ minWidth: "320px" }} onChange={handleChange} />
-      </label>
-      <label>
-       
-        <input type="text" name="royalties" placeholder="royalties individual token 500:5%" className={styles.textInput} style={{ minWidth: "320px" }} onChange={handleChange} />
-      </label> */}
+      
       <label>
        
         <input type="text" name="description" value={formData.description} placeholder="Gig Description" className={styles.textInput} style={{ minWidth: "520px", minHeight:"200px" }} onChange={handleChange} />
       </label>
-         {/* <label>
-       
-        <input type="text" name="royaltyfeeaddress" placeholder="royalty fee recipient" className={styles.textInput} style={{ minWidth: "320px" }} onChange={handleChange} />
-      </label>
-      <label> */}
-       {/* Properties: 
-       <input type="text" name="traittype" placeholder="traittype" className={styles.textInput} style={{ minWidth: "320px" }} onChange={handleChange} />
-     </label>
-     <label>
-       
-       <input type="text" name="traitvalue" placeholder="traitvalue" className={styles.textInput} style={{ minWidth: "320px" }} onChange={handleChange} />
-     </label> */}
+      
     
      <br />
      <label>
@@ -593,12 +672,14 @@ const uploadFile = () => {
           value={savecontractAddress}
           readOnly
           className={styles.textInput}
-          placeholder="Token ID Generated"
           style={{minWidth:320}}
+          placeholder="Token ID Generated"
+         
         />
 
       </label>
-      <br/>
+     
+<br/>
       <button className={styles.mainButton}
       type="submit"
       
@@ -607,7 +688,84 @@ const uploadFile = () => {
       </div>
         
     </form>
+    )}
 
+
+{selectedValue === "marketplace" && (
+
+<div className={styles.container}>
+<form onSubmit={marketplacehandleSubmit}>
+  <label>
+    
+    <input
+      type="text"
+      name="assetContractAddress"
+      className={styles.textInput}
+      style={{minWidth:320}}
+      placeholder="Contract Address"
+      value={marketplaceformData.assetContractAddress}
+      onChange={handleChangemarketplace}
+    />
+  </label>
+  <br />
+  <label>
+    
+    <input
+      type="text"
+      name="tokenId"
+      className={styles.textInput}
+      style={{minWidth:320}}
+      placeholder="TokenID"
+      value={marketplaceformData.tokenId}
+      onChange={handleChangemarketplace}
+    />
+  </label>
+  <br />
+
+
+
+  <label>
+
+    <input
+      type="text"
+      name="currencyContractAddress"
+      className={styles.textInput}
+      style={{minWidth:320}}
+      placeholder="currencyContractAddress"
+      value={marketplaceformData.currencyContractAddress}
+      onChange={handleChangemarketplace}
+    />
+  </label>
+  <br />
+  <label>
+    <input
+      type="text"
+      name="buyoutPricePerToken"
+      className={styles.textInput}
+      style={{minWidth:320}}
+      placeholder="buyoutPricePerToken"
+      value={marketplaceformData.buyoutPricePerToken}
+      onChange={handleChangemarketplace}
+    />
+  </label>
+  <br/>
+
+  <br />
+  <button type="submit" className={styles.mainButton}>Create Listing</button>
+</form>
+</div>
+
+
+
+
+
+
+
+
+)}
+
+
+  </>
   );
 }
 

@@ -11,8 +11,15 @@ import styles from "../styles/Theme.module.css";
 import { ThirdwebSDK } from "@thirdweb-dev/sdk";
 import { MediaRenderer } from "@thirdweb-dev/react";
 import { useSigner } from "@thirdweb-dev/react";
+import { useEffect } from "react";
+import axios from 'axios';
 
 export default function Listings() {
+  const [selectedButton, setSelectedButton] = useState(1);
+
+  const handleButtonClick = (buttonNumber) => {
+    setSelectedButton(buttonNumber);
+  };
   const walletaddress=useAddress()
   const signer=useSigner()
   let sdk = new ThirdwebSDK("mumbai");
@@ -322,23 +329,87 @@ export default function Listings() {
   if(walletaddress){
 
    sdk = ThirdwebSDK.fromSigner(signer);
-
+    
   }
 
-  async function getNFTs(){
-    try{          
-   
-   const contract = await sdk.getContract("0x54c0e3bD955Afe6091F9e1403780288B7c61575d");
-   const nfts = await contract.erc721.getAll();
- 
-   setData(nfts)
-   
-   } catch (err) {
-    console.log(err)
-   }
-     }
-   getNFTs()
+  const renderContent = () => {
+    switch (selectedButton) {
+      case 1:
+        // Render content for button 1
+        return(
 
+          
+
+
+          <div>
+      <>
+      
+      {data.length && data.map(item =>{
+      if(item.listingType=='task'){
+      return<>
+      <form className={styles.collectionContainer}style={{width:500, marginTop:100 }} onSubmit={(e) => handleSubmit(e, item._id)} >
+      <MediaRenderer style={{width:200}} src = {item.image}/>
+      <h1 style={{fontSize:20}}>NFT Name: {item.name}</h1>
+      <h1 style={{fontSize:15}}>Description: {item.description}</h1>
+      <h1 style={{fontSize:10}}>Price: {item.price/1000000000000000000} Reciprocoin</h1>
+      <h1 style={{fontSize:15}}>TokenID {item.tokenID}</h1>
+      
+      <button className={styles.mainButton} style={{width:250, marginTop:50}}
+            type="submit" >Buy NFT</button>
+      {/* <button className={styles.mainButton} onClick={createListing}>List</button> */}
+      
+      
+      </form>
+      </>
+        }
+      })}
+      
+      
+      
+  
+      
+      </>
+   
+      
+      
+          </div>
+      )
+    
+      case 2:
+        // Render content for button 2
+        return <div>NFT Marketplace</div>;
+      case 3:
+        // Render content for button 3
+        return <div>NFT Exc</div>;
+      case 4:
+        // Render content for button 4
+        return <div>Button 4 content</div>;
+      default:
+        return null;
+    }
+  };
+
+  const readListings = () => {
+    (async()=> {
+      try { 
+         const data = await axios.get('/api/read_listings');
+        //  console.log('data', )
+        
+         setData(data?.data?.data)
+          
+          // Send form data to the API endpoint
+         
+          } catch (err) {
+          console.log(err)
+          }
+    
+     })()
+   }
+   useEffect(()=> {
+    readListings()
+         
+          
+    }, [])
 
 
    const handleSubmit=(e, id)=>{
@@ -348,88 +419,68 @@ export default function Listings() {
 
   }
   async function buyNFT(id){
-    const dataShouldMint = data.find(item => item.metadata.id ===  id)
+    const dataShouldMint = data.find(item => item._id ===  id)
 
+    console.log(dataShouldMint)
 
     console.log("setting allowance to the marketplace contract for rpc token")
-
-    const tokencontract = await sdk.getContract("0x11aA92231c097409310ab93304137cFC37D114Cd");
-    await tokencontract.erc20.setAllowance("0x9650CF55b186ECfcf6cC55B8769AE20ce292ffb8", dataShouldMint?.metadata?.attributes[2]?.value);
     try{
+    const tokencontract = await sdk.getContract("0x11aA92231c097409310ab93304137cFC37D114Cd");
+    await tokencontract.erc20.setAllowance("0x9650CF55b186ECfcf6cC55B8769AE20ce292ffb8", dataShouldMint?.price);
+
+
+
+
     const marketplacecontract = await sdk.getContract(
       "0x9650CF55b186ECfcf6cC55B8769AE20ce292ffb8", // The address of your smart contract
       abi,
      
     );
-    const data = await marketplacecontract.call("buy",
-    
-    [dataShouldMint?.metadata?.id]
-    
-    
+
+
+      // console.log(dataShouldMint.metadata.id)
+     const data = await marketplacecontract.call("buy",
+      
+      [dataShouldMint.tokenID]
+      
+      
+      );
+    }
+      catch(err){
+        console.log(err)
+        return;
+         }
+         const {data : deletionResponse}= await  axios({
+          method: 'DELETE',
+          url: '/api/delete_api',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          data: {id}
+        })
+        const release={
+
+          tokenID: dataShouldMint.tokenID
+        }
+        try {
+          // Send form data to the API endpoint
+          await axios.post('/api/post_releasepayment', release);
+         
+          } catch (err) {
+       
+          }
+
+
+    }
+    return (
+      <div style={{marginTop:200}}>
+        <button className={styles.mainButton} onClick={() => handleButtonClick(1)}>NFT Task</button>
+        <button className={styles.mainButton}onClick={() => handleButtonClick(2)}>NFT Marketplace</button>
+        <button className={styles.mainButton} onClick={() => handleButtonClick(3)}>Exchange NFT</button>
+        <button className={styles.mainButton} onClick={() => handleButtonClick(4)}>Button 4</button>
+  
+        {renderContent()}
+      </div>
     );
-    }
-    catch(err){
-
-      
-    }
-
-
-
-
-    // const marketplacecontract = await sdk.getContract(
-    //   "0x4Da870c6c878883EE5c4DbcB80ff92F6d2a8F77d", // The address of your smart contract
-    //   abi,
-     
-    // );
-
-
-    //   console.log(dataShouldMint.metadata.id)
-    //  const data = await marketplacecontract.call("buy",
-      
-    //   [dataShouldMint.metadata.id]
-      
-      
-      // );
-      console.log(dataShouldMint.metadata.id)
-   
-     
-
-
-    }
-   return(
-
-
-
-    <div>
-<>
-
-{data.length && data.map(item =>{
-
-return<>
-<form style={{width:500 }} onSubmit={(e) => handleSubmit(e, item.metadata.id)} >
-<MediaRenderer style={{width:500, minHeight:700, maxHeight:900}} src={item.metadata.image} />
-<h1 style={{fontSize:15, marginLeft:400, marginTop:-400, width:500}}>Name: {item.metadata.name}</h1>
-<h1 style={{fontSize:15, marginLeft:400, width:500}}>Description {item.metadata.description}</h1>
-<h1 style={{fontSize:15, marginLeft:400, width:500}}>Token ID: {item.metadata.id}</h1>
-<h1 style={{fontSize:15, marginLeft:400, width:500}}>Price: {item.metadata.attributes[2].value/1000000000000000000} RPC</h1>
-<button className={styles.mainButton} style={{width:250, marginTop:50}}
-      type="submit" >Buy NFT</button>
-{/* <button className={styles.mainButton} onClick={createListing}>List</button> */}
-
-
-</form>
-</>
-
-})}
-
-
-
-
-
-</>
-
-
-
-    </div>
-)
+  
 }
